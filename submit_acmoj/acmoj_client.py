@@ -31,23 +31,29 @@ from datetime import datetime
 class ACMOJClient:
     def __init__(self, access_token: str):
         self.api_base = "https://acm.sjtu.edu.cn/OnlineJudge/api/v1"
+        self.access_token = access_token
         self.headers = {
             "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": "ACMOJ-Python-Client/2.2"
         }
 
         self.submission_log_file = '/workspace/submission_ids.log'
         
 
-    def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None, 
-                     params: Dict[str, Any] = None) -> Optional[Dict]:
+    def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None,
+                     params: Dict[str, Any] = None, use_json: bool = False) -> Optional[Dict]:
         url = f"{self.api_base}{endpoint}"
+        response = None
         try:
             if method.upper() == "GET":
                 response = requests.get(url, headers=self.headers, params=params, timeout=10)
             elif method.upper() == "POST":
-                response = requests.post(url, headers=self.headers, data=data, timeout=10)
+                if use_json:
+                    headers = {**self.headers, "Content-Type": "application/json"}
+                    response = requests.post(url, headers=headers, json=data, timeout=10)
+                else:
+                    headers = {**self.headers, "Content-Type": "application/x-www-form-urlencoded"}
+                    response = requests.post(url, headers=headers, data=data, timeout=10)
             else:
                 print(f"Unsupported HTTP method: {method}")
                 return None
@@ -56,7 +62,7 @@ class ACMOJClient:
                 return {"status": "success", "message": "Operation successful"}
 
             response.raise_for_status()
-            
+
             if response.content:
                 return response.json()
             else:
@@ -64,7 +70,8 @@ class ACMOJClient:
 
         except requests.exceptions.RequestException as e:
             print(f"API Request failed: {e}")
-            if 'response' in locals() and response:
+            if response is not None:
+                print(f"Response status: {response.status_code}")
                 print(f"Response text: {response.text}")
             return None
 
@@ -82,6 +89,13 @@ class ACMOJClient:
             print(f"✅ Submission ID {submission_id} saved to {self.submission_log_file}")
         except Exception as e:
             print(f"⚠️ Warning: Failed to save submission ID: {e}")
+
+    def submit_code(self, problem_id: int, language: str, code: str) -> Optional[Dict]:
+        data = {"language": language, "code": code}
+        result = self._make_request("POST", f"/problem/{problem_id}/submit", data=data, use_json=False)
+        if result and 'id' in result:
+            self._save_submission_id(result['id'])
+        return result
 
     def submit_git(self, problem_id: int, git_url: str) -> Optional[Dict]:
         data = {"language": "git", "code": git_url}

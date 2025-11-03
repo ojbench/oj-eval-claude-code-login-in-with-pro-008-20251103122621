@@ -1,0 +1,17 @@
+# i++ - Increment digit with wrap around
+# Read the digit
+A<I
+# Set up lookup table: mem[48]='1', mem[49]='2', ..., mem[57]='0'
+[48]<49
+[49]<50
+[50]<51
+[51]<52
+[52]<53
+[53]<54
+[54]<55
+[55]<56
+[56]<57
+[57]<48
+# Output the next digit
+O<[A]
+Z<1

@@ -1,0 +1,15 @@
+# if else - Compare two characters
+# Read two characters
+A<I
+B<I
+# Initialize memory: mem[0]=48 ('0'), mem[1]=49 ('1')
+[0]<48
+[1]<49
+# Use mem[A] as a marker: set it to 1
+[A]<1
+# Check mem[B]: if A==B, then mem[B] should also be 1
+C<[B]
+# C is now 1 if A==B, 0 otherwise
+# Output mem[C] which is '1' if C=1, '0' if C=0
+O<[C]
+Z<1
